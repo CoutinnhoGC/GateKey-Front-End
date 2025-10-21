@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel ADM - Portaria Digital</title>
+    <link rel="stylesheet" href="pg.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1 id="welcomeMessage">Carregando Painel...</h1>
+            <button class="logout-btn" id="logoutButton">Sair</button>
+        </div>
+
+        <h2>Lista de Moradores (Informações Restritas)</h2>
+
+        <div id="statusDashboard"></div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Bloco/AP</th>
+                    <th>CPF</th>
+                    <th>Nome da Mãe</th>
+                    <th>Telefone</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="residentsTableBody">
+                <tr><td colspan="6" style="text-align: center;">Carregando dados...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <!-- JavaScript principal -->
+    <script src="script.js"></script>
+</body>
+</html>
