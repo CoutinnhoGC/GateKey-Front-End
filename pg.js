@@ -56,7 +56,7 @@ linkToLoginFromForgot.addEventListener('click', (e) => {
     showView('loginView');
 });
 
-// --- 1. LOGIN COM GOOGLE (NOVA FUNÇÃO) ---
+// --- 1. LOGIN COM GOOGLE ---
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 googleLoginButton.addEventListener('click', () => {
@@ -64,19 +64,14 @@ googleLoginButton.addEventListener('click', () => {
 
     auth.signInWithPopup(googleProvider)
         .then((result) => {
-            // Sucesso! O objeto 'result.user' é o usuário logado.
             const user = result.user;
             
-            // Opcional: Salvar dados iniciais do novo usuário no Firestore 
-            // se for a primeira vez que ele faz login via Google.
             db.collection("users").doc(user.uid).get().then(doc => {
                 if (!doc.exists) {
-                    // O usuário é novo, cadastra o cargo inicial como 'colaborador' 
-                    // e nome (pegando do Google)
                     db.collection("users").doc(user.uid).set({
                         email: user.email,
                         displayName: user.displayName,
-                        role: 'colaborador', // Cargo padrão para novos logins sociais
+                        role: 'colaborador',
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         console.log("Novo usuário Google criado no Firestore.");
@@ -87,11 +82,9 @@ googleLoginButton.addEventListener('click', () => {
             });
 
             showMessage('Login com Google realizado com sucesso!', 'success');
-            // Redirecionamento é feito pelo onAuthStateChanged (ver abaixo)
 
         })
         .catch((error) => {
-            // Tratamento de erros, como pop-up bloqueado ou usuário cancelando
             let errorMessage = "Ocorreu um erro desconhecido no Login com Google.";
             
             if (error.code === 'auth/popup-closed-by-user') {
@@ -105,9 +98,8 @@ googleLoginButton.addEventListener('click', () => {
             showMessage(errorMessage);
         });
 });
-// ------------------------------------------
 
-// --- 2. Login com Email/Senha (Lógica existente) ---
+// --- 2. Login com Email/Senha ---
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value;
@@ -123,7 +115,7 @@ loginForm.addEventListener('submit', (e) => {
         });
 });
 
-// --- 3. Cadastro (Lógica existente) ---
+// --- 3. Cadastro ---
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('registerName').value;
@@ -134,22 +126,18 @@ registerForm.addEventListener('submit', (e) => {
         .then((userCredential) => {
             const user = userCredential.user;
             
-            // 1. Atualiza o nome de exibição no Firebase Auth
-            return user.updateProfile({
-                displayName: name
-            }).then(() => {
-                // 2. Cria o registro no Firestore
-                return db.collection("users").doc(user.uid).set({
-                    email: user.email,
-                    displayName: name,
-                    role: 'colaborador', // Cargo padrão
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            return user.updateProfile({ displayName: name })
+                .then(() => {
+                    return db.collection("users").doc(user.uid).set({
+                        email: user.email,
+                        displayName: name,
+                        role: 'colaborador',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                 });
-            });
         })
         .then(() => {
             showMessage('Cadastro realizado com sucesso! Redirecionando...', 'success');
-            // O redirecionamento será feito pelo onAuthStateChanged
         })
         .catch((error) => {
             console.error(error);
@@ -157,7 +145,7 @@ registerForm.addEventListener('submit', (e) => {
         });
 });
 
-// --- 4. Recuperação de Senha (Lógica existente) ---
+// --- 4. Recuperação de Senha ---
 forgotPasswordForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('recoveryEmail').value;
@@ -173,34 +161,27 @@ forgotPasswordForm.addEventListener('submit', (e) => {
         });
 });
 
-// --- 5. Observador de Estado (Proteção de Rota) ---
+// --- 5. Observador de Estado (Proteção de Rota e Redirecionamento) ---
 auth.onAuthStateChanged(user => {
     if (user) {
-        // Usuário logado, redireciona para o painel
         db.collection('users').doc(user.uid).get().then(doc => {
-             // O onAuthStateChanged é chamado em qualquer login (email/senha ou Google)
-             // Precisamos garantir que o usuário tenha um registro no Firestore para ter um cargo (role).
              if (!doc.exists) {
-                 // Caso um usuário de Login Social tenha o registro falhado no passo 1, 
-                 // cria aqui um registro de segurança (fallback)
-                  db.collection("users").doc(user.uid).set({
-                    email: user.email,
-                    displayName: user.displayName,
-                    role: 'colaborador', 
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    window.location.href = "dashboard.html";
-                });
+                 db.collection("users").doc(user.uid).set({
+                     email: user.email,
+                     displayName: user.displayName,
+                     role: 'colaborador',
+                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                 }).then(() => {
+                     window.location.href = "cadastrarDigital.html";
+                 });
              } else {
-                 // Registro OK, redireciona
-                 window.location.href = "dashboard.html";
+                 window.location.href = "cadastrarDigital.html";
              }
         });
     } else {
-        // Usuário deslogado, permanece na tela de login (ou redireciona para index.html se vier de outro lugar)
-        if (window.location.pathname.endsWith('dashboard.html')) {
+        if (window.location.pathname.endsWith('cadastrarDigital.html')) {
             window.location.href = "index.html";
         }
-        showView('loginView'); // Garante que a tela de login esteja visível
+        showView('loginView');
     }
 });
