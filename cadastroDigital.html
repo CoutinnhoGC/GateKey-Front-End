@@ -7,8 +7,14 @@
   <link rel="stylesheet" href="pg.css" />
 
   <script type="module">
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { 
+      getAuth, signOut, onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+    import { 
+      getDatabase, ref, set, onValue, remove 
+    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBh9Iq2OGfM3FnBDXCrNMrvNjWGI910Go4",
@@ -22,11 +28,13 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getDatabase(app);
 
     onAuthStateChanged(auth, (user) => {
       if (!user) window.location.href = "index.html";
     });
 
+  
     window.logout = async () => {
       try {
         await signOut(auth);
@@ -35,29 +43,72 @@
         alert("Erro ao sair: " + err.message);
       }
     };
+
+    // 🔹 Referências do banco de dados
+    const commandRef = ref(db, '/system/commands');
+    const statusRef = ref(db, '/system/commands/status');
+
+    // 🔹 Função: enviar comando de cadastro
+    async function iniciarCadastro() {
+      document.getElementById("status-box").textContent = "Enviando comando...";
+      await set(commandRef, { command: "enroll" });
+      document.getElementById("status-box").textContent = "Comando enviado! Aguarde o ESP32...";
+    }
+
+    // 🔹 Função: apagar todas as digitais
+    async function apagarDigitais() {
+      if (confirm("Tem certeza que deseja apagar TODAS as digitais?")) {
+        await set(commandRef, { command: "delete" });
+        document.getElementById("status-box").textContent = "Apagando digitais...";
+      }
+    }
+
+    // 🔹 Ouve o status em tempo real (feedback do ESP32)
+    onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      if (status) {
+        document.getElementById("status-box").textContent = "Status: " + status;
+      }
+    });
+
+    // 🔹 Liga os botões
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('start-biometric').addEventListener('click', iniciarCadastro);
+      document.getElementById('delete-all').addEventListener('click', apagarDigitais);
+    });
   </script>
+
+  <style>
+    #status-box {
+      margin-top: 20px;
+      padding: 10px;
+      font-weight: bold;
+      background: #f3f3f3;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 
 <body>
+  <!-- 🔹 Barra superior -->
   <nav class="navbar">
     <div class="logo">GateKey</div>
     <button id="logout-btn" onclick="logout()">Sair</button>
   </nav>
 
+  <!-- 🔹 Conteúdo principal -->
   <main class="container">
     <div class="card">
       <h1>Cadastro de Biometria Digital</h1>
-      <p>Aqui você pode cadastrar sua biometria (ex.: digital). Este é um exemplo.</p>
+      <p>Pressione o botão abaixo para iniciar o processo de cadastro da digital.</p>
+
       <div class="actions">
-        <button id="start-biometric">Iniciar cadastro</button>
+        <button id="start-biometric">📲 Iniciar cadastro</button>
+        <button id="delete-all" style="background-color:#e74c3c;color:#fff;">🗑️ Apagar todos</button>
       </div>
+
+      <div id="status-box">Status: Aguardando...</div>
     </div>
   </main>
-
-  <script>
-    document.getElementById('start-biometric').addEventListener('click', () => {
-      alert('Aqui você chamaria o fluxo de biometria/WebAuthn/SDK do dispositivo.');
-    });
-  </script>
 </body>
 </html>
