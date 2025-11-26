@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="pg.css" />
 
   <script type="module">
-    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { 
       getAuth, signOut, onAuthStateChanged 
@@ -34,7 +33,6 @@
       if (!user) window.location.href = "index.html";
     });
 
-  
     window.logout = async () => {
       try {
         await signOut(auth);
@@ -44,37 +42,57 @@
       }
     };
 
-    // 🔹 Referências do banco de dados
-    const commandRef = ref(db, '/system/commands');
-    const statusRef = ref(db, '/system/commands/status');
+    const commandRef = ref(db, "/system/commands");
+    const statusRef = ref(db, "/system/commands/status");
 
-    // 🔹 Função: enviar comando de cadastro
     async function iniciarCadastro() {
       document.getElementById("status-box").textContent = "Enviando comando...";
       await set(commandRef, { command: "enroll" });
-      document.getElementById("status-box").textContent = "Comando enviado! Aguarde o ESP32...";
+      document.getElementById("status-box").textContent = "Comando 'enroll' enviado! Aguarde o ESP32...";
     }
 
-    // 🔹 Função: apagar todas as digitais
     async function apagarDigitais() {
       if (confirm("Tem certeza que deseja apagar TODAS as digitais?")) {
+        document.getElementById("status-box").textContent = "Enviando comando de deleção...";
         await set(commandRef, { command: "delete" });
-        document.getElementById("status-box").textContent = "Apagando digitais...";
+        document.getElementById("status-box").textContent = "Comando 'delete' enviado! Aguarde o ESP32...";
       }
     }
 
-    // 🔹 Ouve o status em tempo real (feedback do ESP32)
     onValue(statusRef, (snapshot) => {
       const status = snapshot.val();
+      const statusBox = document.getElementById("status-box");
+
       if (status) {
-        document.getElementById("status-box").textContent = "Status: " + status;
+        statusBox.textContent = "Status: " + status;
+
+        const statusLower = status.toLowerCase();
+
+        if (
+          statusLower.includes("concluído") ||
+          statusLower.includes("sucesso") ||
+          statusLower.includes("salva") ||
+          statusLower.includes("complete") ||
+          statusLower.includes("erro") ||
+          statusLower.includes("apagadas")
+        ) {
+          remove(commandRef)
+            .then(() => {
+              console.log("Comando limpo do banco de dados. Pronto para o próximo comando.");
+              statusBox.textContent += " (Comando Limpo)";
+            })
+            .catch((error) => {
+              console.error("Erro ao limpar comando:", error);
+            });
+        }
+      } else {
+        statusBox.textContent = "Status: Aguardando...";
       }
     });
 
-    // 🔹 Liga os botões
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('start-biometric').addEventListener('click', iniciarCadastro);
-      document.getElementById('delete-all').addEventListener('click', apagarDigitais);
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("start-biometric").addEventListener("click", iniciarCadastro);
+      document.getElementById("delete-all").addEventListener("click", apagarDigitais);
     });
   </script>
 
@@ -90,13 +108,11 @@
 </head>
 
 <body>
-  <!-- 🔹 Barra superior -->
   <nav class="navbar">
     <div class="logo">GateKey</div>
     <button id="logout-btn" onclick="logout()">Sair</button>
   </nav>
 
-  <!-- 🔹 Conteúdo principal -->
   <main class="container">
     <div class="card">
       <h1>Cadastro de Biometria Digital</h1>
