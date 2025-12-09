@@ -149,7 +149,6 @@ button {
   color: var(--muted);
 }
 
-/* 🔹 Botão de logout */
 #logout-btn {
   background: var(--danger);
   border: none;

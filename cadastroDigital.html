@@ -1,116 +1,54 @@
 <!doctype html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>GateKey - Cadastro de Biometria</title>
+  <link rel="stylesheet" href="cadastroDigital.css" />
   <link rel="stylesheet" href="pg.css" />
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { 
-      getAuth, signOut, onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    import { 
-      getDatabase, ref, set, onValue, remove 
-    } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBh9Iq2OGfM3FnBDXCrNMrvNjWGI910Go4",
-      authDomain: "gatekey-9bb64.firebaseapp.com",
-      databaseURL: "https://gatekey-9bb64-default-rtdb.firebaseio.com",
-      projectId: "gatekey-9bb64",
-      storageBucket: "gatekey-9bb64.firebasestorage.app",
-      messagingSenderId: "933663081375",
-      appId: "1:933663081375:web:06ef33ba01392a7e5c73aa"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href = "index.html";
-    });
-
-    window.logout = async () => {
-      try {
-        await signOut(auth);
-        window.location.href = "index.html";
-      } catch (err) {
-        alert("Erro ao sair: " + err.message);
-      }
-    };
-
-    const commandRef = ref(db, "/system/commands");
-    const statusRef = ref(db, "/system/commands/status");
-
-    async function iniciarCadastro() {
-      document.getElementById("status-box").textContent = "Enviando comando...";
-      await set(commandRef, { command: "enroll" });
-      document.getElementById("status-box").textContent = "Comando 'enroll' enviado! Aguarde o ESP32...";
-    }
-
-    async function apagarDigitais() {
-      if (confirm("Tem certeza que deseja apagar TODAS as digitais?")) {
-        document.getElementById("status-box").textContent = "Enviando comando de deleção...";
-        await set(commandRef, { command: "delete" });
-        document.getElementById("status-box").textContent = "Comando 'delete' enviado! Aguarde o ESP32...";
-      }
-    }
-
-    onValue(statusRef, (snapshot) => {
-      const status = snapshot.val();
-      const statusBox = document.getElementById("status-box");
-
-      if (status) {
-        statusBox.textContent = "Status: " + status;
-
-        const statusLower = status.toLowerCase();
-
-        if (
-          statusLower.includes("concluído") ||
-          statusLower.includes("sucesso") ||
-          statusLower.includes("salva") ||
-          statusLower.includes("complete") ||
-          statusLower.includes("erro") ||
-          statusLower.includes("apagadas")
-        ) {
-          remove(commandRef)
-            .then(() => {
-              console.log("Comando limpo do banco de dados. Pronto para o próximo comando.");
-              statusBox.textContent += " (Comando Limpo)";
-            })
-            .catch((error) => {
-              console.error("Erro ao limpar comando:", error);
-            });
-        }
-      } else {
-        statusBox.textContent = "Status: Aguardando...";
-      }
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("start-biometric").addEventListener("click", iniciarCadastro);
-      document.getElementById("delete-all").addEventListener("click", apagarDigitais);
-    });
-  </script>
-
-  <style>
-    #status-box {
-      margin-top: 20px;
-      padding: 10px;
-      font-weight: bold;
-      background: #f3f3f3;
-      border-radius: 5px;
-    }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 </head>
 
 <body>
-  <nav class="navbar">
-    <div class="logo">GateKey</div>
-    <button id="logout-btn" onclick="logout()">Sair</button>
+  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+      <a class="logo" href="#">GateKey</a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
+        aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarScroll">
+        <ul class="navbar-nav ms-auto my-2 my-lg-0 navbar-nav-scroll">
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              ➕ Cadastrar
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="cadastroMorador.html">Morador</a></li>
+              <li><a class="dropdown-item" href="cadastroFuncionario.html">Funcionário</a></li>
+              <li><a class="dropdown-item" href="cadastroUnidade.html">Unidade</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="cadastroBiometria.html">Biometria Digital</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="#">Outro Menu</a>
+          </li>
+
+        </ul>
+
+        <button id="logout-btn" onclick="logout()" class="btn btn-danger">Sair</button>
+
+      </div>
+    </div>
   </nav>
 
   <main class="container">
@@ -126,5 +64,14 @@
       <div id="status-box">Status: Aguardando...</div>
     </div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
 </body>
+
+
+
+<script type="module" src="cadastroDigital.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </html>
